@@ -1,0 +1,86 @@
+/* Only explicitly classified top-level Markdown is styled. No blanket cm-line reset. */
+.markdown-source-view.mod-cm6 .cm-line.ut-line:not(.ut-blank),
+.markdown-rendered .ut-reading {
+  margin-block: 0 !important;
+  padding-block-start: var(--ut-before, 0px) !important;
+  padding-block-end: var(--ut-after, 0px) !important;
+}
+.markdown-source-view.mod-cm6 .cm-line.ut-body,
+.markdown-rendered p.ut-prose {
+  line-height: var(--ut-line-height) !important;
+}
+/* A logical cm-line can wrap visually: padding is paid once per source line. */
+.markdown-source-view.mod-cm6 .cm-line.ut-blank {
+  font-size: 1px !important;
+  line-height: 1px !important;
+  min-height: 1px !important;
+  height: 1px !important;
+  margin-block: 0 !important;
+  padding-block: 0 !important;
+}
+.markdown-rendered .ut-prose .ut-break {
+  display: block;
+  height: var(--ut-paragraph-gap);
+  margin: 0;
+  padding: 0;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.ut-h1,
+.markdown-rendered h1.ut-reading {
+  font-size: calc(var(--font-text-size, 16px) * var(--ut-h1-size)) !important;
+  line-height: 1.25 !important;
+}
+.markdown-source-view.mod-cm6 .cm-line.ut-h1 .cm-header-1 {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.ut-h2,
+.markdown-rendered h2.ut-reading {
+  font-size: calc(var(--font-text-size, 16px) * var(--ut-h2-size)) !important;
+  line-height: 1.25 !important;
+}
+.markdown-source-view.mod-cm6 .cm-line.ut-h2 .cm-header-2 {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.ut-h3,
+.markdown-rendered h3.ut-reading {
+  font-size: calc(var(--font-text-size, 16px) * var(--ut-h3-size)) !important;
+  line-height: 1.25 !important;
+}
+.markdown-source-view.mod-cm6 .cm-line.ut-h3 .cm-header-3 {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.ut-h4,
+.markdown-rendered h4.ut-reading {
+  font-size: calc(var(--font-text-size, 16px) * var(--ut-h4-size)) !important;
+  line-height: 1.25 !important;
+}
+.markdown-source-view.mod-cm6 .cm-line.ut-h4 .cm-header-4 {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.ut-h5,
+.markdown-rendered h5.ut-reading {
+  font-size: calc(var(--font-text-size, 16px) * var(--ut-h5-size)) !important;
+  line-height: 1.25 !important;
+}
+.markdown-source-view.mod-cm6 .cm-line.ut-h5 .cm-header-5 {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.ut-h6,
+.markdown-rendered h6.ut-reading {
+  font-size: calc(var(--font-text-size, 16px) * var(--ut-h6-size)) !important;
+  line-height: 1.25 !important;
+}
+.markdown-source-view.mod-cm6 .cm-line.ut-h6 .cm-header-6 {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
