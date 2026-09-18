@@ -16,4 +16,3 @@ export const typographyField = StateField.define<DecorationSet>({
   update: (value, transaction) => transaction.docChanged ? decorate(transaction.newDoc.toString()) : value,
   provide: field => EditorView.decorations.from(field)
 });
-

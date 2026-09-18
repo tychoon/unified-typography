@@ -6,7 +6,7 @@ Prepared on September 17, 2026. Repository: https://github.com/tychoon/unified-t
 
 - Author: Tychoon.
 - Plugin ID and recommended repository name: `unified-typography`.
-- Release version: `0.1.1`.
+- Release version: `0.1.2`.
 - License: MIT, prepared as the default license for this project. Review it before publishing.
 - Minimum Obsidian version: `1.13.7`, a conservative baseline rather than a claim of older-version testing.
 - Complete the real-app checks in `VALIDATION.md` before making compatibility claims.
@@ -24,8 +24,8 @@ Keep the generated `main.js` and `styles.css` in the repository as provided. Run
 
 Create a release from the uploaded commit:
 
-- Tag: `0.1.1` (exactly, without `v`).
-- Title: `Unified Typography 0.1.1`.
+- Tag: `0.1.2` (exactly, without `v`).
+- Title: `Unified Typography 0.1.2`.
 - Body: paste `RELEASE-NOTES.md`.
 - Attach the prepared `main.js`, `manifest.json`, and `styles.css` individually.
 
@@ -49,4 +49,3 @@ Once the listing is available, use the forum or short announcement from `PUBLISH
 - Description and compatibility requirements: https://docs.obsidian.md/community-directory/submission-requirements-for-plugins
 - Licensing and disclosures: https://docs.obsidian.md/community-directory/developer-policies
 - Review and build verification: https://docs.obsidian.md/community-directory/manage-entry
-

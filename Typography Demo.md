@@ -42,3 +42,36 @@ A blank line inside a code block
 | 1 | 2 |
 
 ## Final heading
+
+
+## List outer spacing
+
+Paragraph before a list.
+
+- First unordered item with enough text to wrap when the pane becomes narrow.
+- Second item
+  - Nested item: retain the theme indentation and internal spacing.
+
+### Heading after an unordered list
+
+1. First ordered item
+2. Second ordered item
+
+### Heading before tasks
+
+- [ ] Open task
+- [x] Completed task
+
+Paragraph after tasks.
+
+### Loose list
+
+- First item
+
+- Second item
+
+### Adjacent list types
+
+- Unordered item
+
+1. Ordered item

@@ -1,7 +1,7 @@
 {
   "id": "unified-typography",
   "name": "Unified Typography",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "minAppVersion": "1.13.7",
   "description": "Unify body line height, source line break spacing, and heading sizes and spacing across reading view, Live Preview, and source mode.",
   "author": "Tychoon",

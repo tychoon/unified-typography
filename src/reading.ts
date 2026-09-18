@@ -28,3 +28,8 @@ export function decorateBreaks(element: HTMLElement): () => void {
   return () => { for (const restore of undo.reverse()) restore(); };
 }
 
+/** Select outer blocks only; list descendants keep the theme's internal layout. */
+export function readingCandidates(element: HTMLElement): HTMLElement[] {
+  return [element, ...Array.from(element.querySelectorAll<HTMLElement>('p,h1,h2,h3,h4,h5,h6,ul,ol'))]
+    .filter(node => /^(P|H[1-6]|UL|OL)$/.test(node.tagName) && !node.closest('li, blockquote, table, pre, .callout, .internal-embed'));
+}

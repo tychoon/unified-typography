@@ -1,10 +1,10 @@
 import {parser, GFM} from '@lezer/markdown';
 const markdown = parser.configure(GFM);
-export interface Block { start: number; end: number; level: number; kind: 'body' | 'heading' }
-export interface LineStyle { from: number; kind: 'body' | 'heading' | 'blank'; level: number; before: string; after: string }
+export interface Block { start: number; end: number; level: number; kind: 'body' | 'heading' | 'list'; listType?: 'ordered' | 'unordered' }
+export interface LineStyle { from: number; kind: 'body' | 'heading' | 'list' | 'blank'; level: number; before: string; after: string }
 export interface Plan { blocks: Block[]; lines: Map<number, LineStyle>; sourceLines: string[] }
-const before = (b: Block) => b.kind === 'heading' ? `var(--ut-h${b.level}-before)` : '0px';
-const after = (b: Block) => b.kind === 'heading' ? `var(--ut-h${b.level}-after)` : 'var(--ut-paragraph-gap)';
+const before = (b: Block) => b.kind === 'heading' ? `var(--ut-h${b.level}-before)` : b.kind === 'list' ? 'var(--ut-list-before)' : '0px';
+const after = (b: Block) => b.kind === 'heading' ? `var(--ut-h${b.level}-after)` : b.kind === 'list' ? 'var(--ut-list-after)' : 'var(--ut-paragraph-gap)';
 export function buildPlan(source: string): Plan {
   const sourceLines = source.split('\n');
   const offsets: number[] = []; let position = 0;
@@ -41,12 +41,14 @@ export function buildPlan(source: string): Plan {
   const blocks: Block[] = [];
   for (let n = tree.topNode.firstChild; n; n = n.nextSibling) {
     const heading = /^ATXHeading([1-6])$/.exec(n.name);
-    if (n.name !== 'Paragraph' && !heading) continue;
+    const list = n.name === 'BulletList' || n.name === 'OrderedList';
+    if (n.name !== 'Paragraph' && !heading && !list) continue;
     const start = lineAt(n.from), end = lineAt(Math.max(n.from, n.to - 1));
     const raw = sourceLines.slice(start, end + 1).join('\n');
     // Embedded/custom rendered blocks are outside the MVP's plain-prose scope.
-    if (/!\[|<[^>]+>|\$\$|%%/.test(raw)) continue;
-    blocks.push({start, end, level: heading ? Number(heading[1]) : 0, kind: heading ? 'heading' : 'body'});
+    if (!list && /!\[|<[^>]+>|\$\$|%%/.test(raw)) continue;
+    blocks.push({start, end, level: heading ? Number(heading[1]) : 0, kind: heading ? 'heading' : list ? 'list' : 'body',
+      ...(list ? {listType: n.name === 'OrderedList' ? 'ordered' as const : 'unordered' as const} : {})});
   }
   const lines = new Map<number, LineStyle>();
   blocks.forEach((block, index) => {
@@ -55,8 +57,10 @@ export function buildPlan(source: string): Plan {
     const gap = connected ? `max(${after(previous)}, ${before(block)})` : before(block);
     const blanks = connected ? block.start - previous.end - 1 : 0;
     for (let i = block.start; i <= block.end; i++) {
+      // Outer list boundaries only: nested items, continuation lines and internal blanks retain theme layout.
+      if (block.kind === 'list' && i !== block.start && i !== block.end) continue;
       lines.set(i, {from: offsets[i], kind: block.kind, level: block.level,
-        before: i === block.start ? (blanks ? `max(0px, calc(${gap} - ${blanks}px))` : gap) : 'var(--ut-paragraph-gap)',
+        before: i === block.start ? (blanks ? `max(0px, calc(${gap} - ${blanks}px))` : gap) : block.kind === 'list' ? '0px' : 'var(--ut-paragraph-gap)',
         after: '0px'});
     }
     if (connected) for (let i = previous.end + 1; i < block.start; i++) {
@@ -64,7 +68,7 @@ export function buildPlan(source: string): Plan {
     }
     const next = blocks[index + 1];
     const nextConnected = next && sourceLines.slice(block.end + 1, next.start).every(l => !l.trim());
-    if (!nextConnected && block.kind === 'heading') lines.get(block.end)!.after = after(block);
+    if (!nextConnected && block.kind !== 'body') lines.get(block.end)!.after = after(block);
   });
   return {blocks, lines, sourceLines};
 }
@@ -73,4 +77,3 @@ export function readingGap(plan: Plan, block: Block): string {
   return previous && plan.sourceLines.slice(previous.end + 1, block.start).every(l => !l.trim())
     ? `max(${after(previous)}, ${before(block)})` : before(block);
 }
-

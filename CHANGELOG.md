@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2
+
+- Add shared outer spacing settings for ordered, unordered, and task lists.
+- Merge list boundaries with headings and body text; normalize blank separators between supported blocks.
+- Preserve nested list and list item layout.
+- Migrate existing settings with list defaults and add seven regression tests.
+
 ## 0.1.1
 
 - Translate the entire settings interface, documentation, and demo note into English.

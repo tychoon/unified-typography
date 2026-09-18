@@ -4308,8 +4308,8 @@ var Emoji = {
 
 // src/model.ts
 var markdown = parser.configure(GFM);
-var before = (b) => b.kind === "heading" ? `var(--ut-h${b.level}-before)` : "0px";
-var after = (b) => b.kind === "heading" ? `var(--ut-h${b.level}-after)` : "var(--ut-paragraph-gap)";
+var before = (b) => b.kind === "heading" ? `var(--ut-h${b.level}-before)` : b.kind === "list" ? "var(--ut-list-before)" : "0px";
+var after = (b) => b.kind === "heading" ? `var(--ut-h${b.level}-after)` : b.kind === "list" ? "var(--ut-list-after)" : "var(--ut-paragraph-gap)";
 function buildPlan(source) {
   const sourceLines = source.split("\n");
   const offsets = [];
@@ -4357,11 +4357,18 @@ function buildPlan(source) {
   const blocks = [];
   for (let n = tree.topNode.firstChild; n; n = n.nextSibling) {
     const heading2 = /^ATXHeading([1-6])$/.exec(n.name);
-    if (n.name !== "Paragraph" && !heading2) continue;
+    const list = n.name === "BulletList" || n.name === "OrderedList";
+    if (n.name !== "Paragraph" && !heading2 && !list) continue;
     const start = lineAt(n.from), end = lineAt(Math.max(n.from, n.to - 1));
     const raw = sourceLines.slice(start, end + 1).join("\n");
-    if (/!\[|<[^>]+>|\$\$|%%/.test(raw)) continue;
-    blocks.push({ start, end, level: heading2 ? Number(heading2[1]) : 0, kind: heading2 ? "heading" : "body" });
+    if (!list && /!\[|<[^>]+>|\$\$|%%/.test(raw)) continue;
+    blocks.push({
+      start,
+      end,
+      level: heading2 ? Number(heading2[1]) : 0,
+      kind: heading2 ? "heading" : list ? "list" : "body",
+      ...list ? { listType: n.name === "OrderedList" ? "ordered" : "unordered" } : {}
+    });
   }
   const lines = /* @__PURE__ */ new Map();
   blocks.forEach((block, index) => {
@@ -4370,11 +4377,12 @@ function buildPlan(source) {
     const gap = connected ? `max(${after(previous)}, ${before(block)})` : before(block);
     const blanks = connected ? block.start - previous.end - 1 : 0;
     for (let i = block.start; i <= block.end; i++) {
+      if (block.kind === "list" && i !== block.start && i !== block.end) continue;
       lines.set(i, {
         from: offsets[i],
         kind: block.kind,
         level: block.level,
-        before: i === block.start ? blanks ? `max(0px, calc(${gap} - ${blanks}px))` : gap : "var(--ut-paragraph-gap)",
+        before: i === block.start ? blanks ? `max(0px, calc(${gap} - ${blanks}px))` : gap : block.kind === "list" ? "0px" : "var(--ut-paragraph-gap)",
         after: "0px"
       });
     }
@@ -4383,7 +4391,7 @@ function buildPlan(source) {
     }
     const next = blocks[index + 1];
     const nextConnected = next && sourceLines.slice(block.end + 1, next.start).every((l) => !l.trim());
-    if (!nextConnected && block.kind === "heading") lines.get(block.end).after = after(block);
+    if (!nextConnected && block.kind !== "body") lines.get(block.end).after = after(block);
   });
   return { blocks, lines, sourceLines };
 }
@@ -4456,11 +4464,16 @@ function decorateBreaks(element) {
     for (const restore of undo.reverse()) restore();
   };
 }
+function readingCandidates(element) {
+  return [element, ...Array.from(element.querySelectorAll("p,h1,h2,h3,h4,h5,h6,ul,ol"))].filter((node) => /^(P|H[1-6]|UL|OL)$/.test(node.tagName) && !node.closest("li, blockquote, table, pre, .callout, .internal-embed"));
+}
 
 // src/settings.ts
 var DEFAULTS = {
   lineHeight: 1.65,
   paragraphGap: 8,
+  listBefore: 8,
+  listAfter: 8,
   headings: [
     { size: 2, before: 24, after: 12 },
     { size: 1.65, before: 20, after: 10 },
@@ -4478,6 +4491,8 @@ function normalize(value) {
   return {
     lineHeight: number2(s.lineHeight, DEFAULTS.lineHeight, 1, 3),
     paragraphGap: number2(s.paragraphGap, DEFAULTS.paragraphGap, 0, 80),
+    listBefore: number2(s.listBefore, DEFAULTS.listBefore, 0, 120),
+    listAfter: number2(s.listAfter, DEFAULTS.listAfter, 0, 120),
     headings: DEFAULTS.headings.map((h, i) => {
       const v = Array.isArray(s.headings) ? s.headings[i] : void 0;
       return { size: number2(v?.size, h.size, 0.6, 4), before: number2(v?.before, h.before, 0, 120), after: number2(v?.after, h.after, 0, 120) };
@@ -4485,7 +4500,7 @@ function normalize(value) {
   };
 }
 function variables(s) {
-  return `--ut-line-height:${s.lineHeight};--ut-paragraph-gap:${s.paragraphGap}px;` + s.headings.map(
+  return `--ut-line-height:${s.lineHeight};--ut-paragraph-gap:${s.paragraphGap}px;--ut-list-before:${s.listBefore}px;--ut-list-after:${s.listAfter}px;` + s.headings.map(
     (h, i) => `--ut-h${i + 1}-size:${h.size};--ut-h${i + 1}-before:${h.before}px;--ut-h${i + 1}-after:${h.after}px;`
   ).join("");
 }
@@ -4558,7 +4573,7 @@ var UnifiedTypography = class extends import_obsidian.Plugin {
   }
   process(el, ctx) {
     this.ensureDocument(el.ownerDocument);
-    const elements = [el, ...Array.from(el.querySelectorAll("p,h1,h2,h3,h4,h5,h6"))].filter((node) => /^(P|H[1-6])$/.test(node.tagName) && !node.closest("li, blockquote, table, pre, .callout, .internal-embed"));
+    const elements = readingCandidates(el);
     const used = /* @__PURE__ */ new Set();
     for (const node of elements) {
       if (this.marked.has(node)) continue;
@@ -4569,22 +4584,26 @@ var UnifiedTypography = class extends import_obsidian.Plugin {
         this.cachedPlan = buildPlan(info.text);
       }
       const plan = this.cachedPlan;
-      const level = node.tagName === "P" ? 0 : Number(node.tagName[1]);
-      const block = plan.blocks.find((b) => b.start >= info.lineStart && b.start <= info.lineEnd && b.level === level && !used.has(b.start));
+      const isList = node.tagName === "UL" || node.tagName === "OL";
+      const level = /^H[1-6]$/.test(node.tagName) ? Number(node.tagName[1]) : 0;
+      const kind = isList ? "list" : level ? "heading" : "body";
+      const listType = node.tagName === "OL" ? "ordered" : "unordered";
+      const block = plan.blocks.find((b) => b.start >= info.lineStart && b.start <= info.lineEnd && b.level === level && b.kind === kind && (!isList || b.listType === listType) && !used.has(b.start));
       if (!block) continue;
       used.add(block.start);
       this.marked.add(node);
-      node.classList.add("ut-reading", level ? `ut-h${level}` : "ut-prose");
+      const className = isList ? "ut-list" : level ? `ut-h${level}` : "ut-prose";
+      node.classList.add("ut-reading", className);
       node.style.setProperty("--ut-before", readingGap(plan, block));
       node.style.setProperty("--ut-after", plan.lines.get(block.end)?.after ?? "0px");
-      const restoreBreaks = level ? () => {
+      const restoreBreaks = level || isList ? () => {
       } : decorateBreaks(node);
       let restored = false;
       const cleanup = () => {
         if (restored) return;
         restored = true;
         restoreBreaks();
-        node.classList.remove("ut-reading", level ? `ut-h${level}` : "ut-prose");
+        node.classList.remove("ut-reading", className);
         node.style.removeProperty("--ut-before");
         node.style.removeProperty("--ut-after");
         this.marked.delete(node);
@@ -4609,7 +4628,7 @@ var TypographyTab = class extends import_obsidian.PluginSettingTab {
     const { containerEl } = this;
     const plugin = this.typography;
     containerEl.empty();
-    containerEl.createEl("p", { text: "Apply the same settings to reading view, Live Preview, and source mode. Changes take effect immediately. Only top-level body text and ATX (#) headings are adjusted." });
+    containerEl.createEl("p", { text: "Apply the same settings to reading view, Live Preview, and source mode. Changes take effect immediately. Adjusts top-level body text, ATX (#) headings, and the outer spacing of lists." });
     const slider = (name2, desc, value, min, max, step, change) => {
       new import_obsidian.Setting(containerEl).setName(name2).setDesc(desc).addSlider((control) => control.setLimits(min, max, step).setValue(value).setDynamicTooltip().onChange(async (v) => {
         change(v);
@@ -4618,11 +4637,14 @@ var TypographyTab = class extends import_obsidian.PluginSettingTab {
     };
     slider("Body line height", "Line height as a multiple of the body font size. Automatically wrapped lines use this value without additional spacing.", plugin.settings.lineHeight, 1, 3, 0.05, (v) => plugin.settings.lineHeight = v);
     slider("Source line break spacing", "Extra spacing in pixels at each source line break in body text. Blank separator lines do not add another full gap.", plugin.settings.paragraphGap, 0, 80, 1, (v) => plugin.settings.paragraphGap = v);
+    new import_obsidian.Setting(containerEl).setName("Lists").setHeading();
+    slider("Space before lists", "Outer spacing in pixels for ordered, unordered, and task lists. Adjacent block spacing uses the larger value.", plugin.settings.listBefore, 0, 120, 1, (v) => plugin.settings.listBefore = v);
+    slider("Space after lists", "Outer spacing in pixels. Nested lists and spacing between items retain the theme layout.", plugin.settings.listAfter, 0, 120, 1, (v) => plugin.settings.listAfter = v);
     for (let i = 0; i < 6; i++) {
       new import_obsidian.Setting(containerEl).setName(`Heading ${i + 1}`).setHeading();
       slider("Font size", "Size as a multiple of the current body font size.", plugin.settings.headings[i].size, 0.6, 4, 0.05, (v) => plugin.settings.headings[i].size = v);
       slider("Space before", "Spacing in pixels. Uses the larger of this value and the space after the previous block.", plugin.settings.headings[i].before, 0, 120, 1, (v) => plugin.settings.headings[i].before = v);
-      slider("Space after", "Spacing in pixels. Uses the larger of this value and the space before the next heading.", plugin.settings.headings[i].after, 0, 120, 1, (v) => plugin.settings.headings[i].after = v);
+      slider("Space after", "Spacing in pixels. Uses the larger of this value and the space before the next block.", plugin.settings.headings[i].after, 0, 120, 1, (v) => plugin.settings.headings[i].after = v);
     }
     new import_obsidian.Setting(containerEl).setName("Reset to defaults").addButton((button) => button.setButtonText("Reset to defaults").onClick(async () => {
       plugin.settings = normalize(DEFAULTS);
