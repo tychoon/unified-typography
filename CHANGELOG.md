@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.0.0
+
+- Complete rebuild as a single plain-JavaScript plugin — no build step required.
+- Every length value now supports `px` and `em` units, switchable at any time.
+- Add spacing controls beyond body text and headings: ordered and unordered
+  lists (separately), blockquotes, code blocks, tables, horizontal rules,
+  callouts, math blocks, and embedded content.
+- Keep editing mode and reading mode aligned through shared values, Obsidian
+  CSS variables, and blank-line collapse rules.
+- Add bilingual documentation (English default, Simplified Chinese).
+
 ## 0.1.2
 
 - Add shared outer spacing settings for ordered, unordered, and task lists.

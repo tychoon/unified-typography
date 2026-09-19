@@ -1,9 +1,9 @@
 {
-  "id": "unified-typography",
-  "name": "Unified Typography",
-  "version": "0.1.2",
-  "minAppVersion": "1.13.7",
-  "description": "Unify body line height, source line break spacing, and heading sizes and spacing across reading view, Live Preview, and source mode.",
-  "author": "Tychoon",
-  "isDesktopOnly": false
+	"id": "unified-typography",
+	"name": "Unified Typography",
+	"version": "2.0.0",
+	"minAppVersion": "1.5.0",
+	"description": "Unified content rendering for editing and reading modes: line height, paragraph spacing, heading spacing/sizes, list spacing/indentation, and spacing for quotes, code blocks, tables, rules, callouts, math and embeds.",
+	"author": "huangrui",
+	"isDesktopOnly": false
 }
